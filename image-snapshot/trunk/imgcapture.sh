@@ -113,6 +113,10 @@ list_kernel () {
 }
 
 select_kernel () {
+
+# Choose newest kernel by default
+ANSWER=1
+
 echo ""
 echo "Select an available kernel by number from below:"
 list_kernel
@@ -157,22 +161,16 @@ else
 fi
   
 
-cat << HELP
+cat << MSG
 The following files have been created:
-
 $dest/${name}.tgz
 $dest/$KERN
 $dest/$INITRD
 $dest/${name}.xml
 
-To download them and preserve the sparseness of the disk image, we recommend running
-the following command from your own workstation:
+MSG
+cat $dest/${name}.xml
 
-  ssh -i ~/.ssh/<id_rsa> root@$IP 'cd $dest; tar cfS - ${name}.*' | tar xvfS -
-
-where <id_rsa> is the actual name of the ssh private key file that you used with Flukes.
-
-HELP
 }
 
 meta () {
@@ -186,12 +184,12 @@ cat > $dest/${name}.xml << EOF
      <image>
           <type>KERNEL</type>
           <signature>$(sha1sum $dest/$KERN | cut -d' ' -f 1)</signature>
-          <url>http://www.your-own-webserver.edu/images/${name}.aki</url>
+          <url>http://www.your-own-webserver.edu/images/$KERN</url>
      </image>
      <image>
           <type>RAMDISK</type>
           <signature>$(sha1sum $dest/$INITRD | cut -d' ' -f 1)</signature>
-          <url>http://www.your-own-webserver.edu/images/${name}.ari</url>
+          <url>http://www.your-own-webserver.edu/images/$INITRD</url>
      </image>
 </images>
 EOF
@@ -206,10 +204,6 @@ if [ $# -lt 2 ]; then
   usage
   exit 1
 fi
-
-
-
-
 
 
 # leading colon is so we do error handling
@@ -256,17 +250,23 @@ if [ -z "$name" ]; then
   fi
 fi
 
-#create || (echo "Failed to create disk image." && exit 1)
-#format || (echo "Failed to locate mkfs.  Could not format disk image." && exit 1)
-#[ ! -d /mnt/tmp ] && mkdir /mnt/tmp
-#mount -o loop $dest/filesystem /mnt/tmp
-#copy
-#umount /mnt/tmp || (echo "Failed to unmount image file." && exit 1)
-
 select_kernel
+
+create || (echo "Failed to create disk image." && exit 1)
+format || (echo "Failed to locate mkfs.  Could not format disk image." && exit 1)
+
+[ ! -d /mnt/tmp ] && mkdir /mnt/tmp
+mount -o loop $dest/filesystem /mnt/tmp
+copy
+umount /mnt/tmp || (echo "Failed to unmount image file." && exit 1)
+
 cp /boot/$KERN $dest/$KERN
 cp /boot/$INITRD $dest/$INITRD
-#tar -Sczvf ${dest}/${name}.tgz  -C $dest filesystem
+
+echo -e "Creating compressed tar archive...\n"
+tar -Sczvf ${dest}/${name}.tgz  -C $dest filesystem
+
+echo -e "Generatng metadata...\n"
 meta
 
 # Print some hints
