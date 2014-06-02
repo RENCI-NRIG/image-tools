@@ -31,6 +31,7 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 # initialize flag vars
 name=   dest=   size=2G   blocksize=4096
 KERN_ARR=  INIT_ARR=  KERN=  INITRD=
+url="http://www.your-own-webserver.edu/images/"
 
 seek () {
 
@@ -174,29 +175,30 @@ cat $dest/${name}.xml
 }
 
 meta () {
+
 cat > $dest/${name}.xml << EOF
 <images>
      <image>
           <type>ZFILESYSTEM</type>
           <signature>$(sha1sum $dest/${name}.tgz | cut -d' ' -f 1)</signature>
-          <url>http://www.your-own-webserver.edu/images/${name}.tgz</url>
+          <url>$url/${name}.tgz</url>
      </image>
      <image>
           <type>KERNEL</type>
           <signature>$(sha1sum $dest/$KERN | cut -d' ' -f 1)</signature>
-          <url>http://www.your-own-webserver.edu/images/$KERN</url>
+          <url>$url/$KERN</url>
      </image>
      <image>
           <type>RAMDISK</type>
           <signature>$(sha1sum $dest/$INITRD | cut -d' ' -f 1)</signature>
-          <url>http://www.your-own-webserver.edu/images/$INITRD</url>
+          <url>$url/$INITRD</url>
      </image>
 </images>
 EOF
 }
 
 usage () {
-echo "Usage: $0 [-v] [-n name] [-d destination] [-s size (M|MB|G|GB|T|TB)]" >&2
+echo "Usage: $0 [-v] [-n name] [-d destination] [-s size (M|MB|G|GB|T|TB)] [-u url (e.g. http://geni-images.renci.org/images/)]" >&2
 }
 
 
@@ -207,12 +209,13 @@ fi
 
 
 # leading colon is so we do error handling
-while getopts :vn:d:b:s: opt
+while getopts :vn:d:u:b:s: opt
 do
         case $opt in
         v)      set -x  ;;
         n)      name=$OPTARG    ;;
         d)      dest=$OPTARG    ;;
+	u)	url=$OPTARG	;;
 	b)	blocksize=$OPTARG ;;
         s)      size=$OPTARG
 		seek=$(seek) 
