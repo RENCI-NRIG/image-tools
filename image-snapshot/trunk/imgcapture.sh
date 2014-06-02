@@ -30,6 +30,7 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 
 # initialize flag vars
 name=   dest=   size=2G   blocksize=4096
+KERN_ARR=  INIT_ARR=  KERN=  INITRD=
 
 seek () {
 
@@ -85,6 +86,60 @@ cd /; find . ! -path "./tmp/*" ! -path "./proc/*" ! -path "./sys/*" \
   | cpio -pmdv /mnt/tmp
 }
 
+
+list_kernel () {
+  KERNS=$(ls /boot/vmlin* | sort -r | cut -d '/' -f 3)
+  INITS=$(ls /boot/init* | sort -r | cut -d '/' -f 3)
+
+  num=1
+  for i in $INITS
+  do
+          INIT_ARR[${num}]=$i
+          num=$((num+1))
+  done;
+
+  num=1
+  for i in $KERNS
+  do
+          echo -e "\t$num)\t$i"
+          KERN_ARR[${num}]=$i
+          num=$((num+1))
+  done;
+
+  if [ ${#KERN_ARR[@]} -ne ${#INIT_ARR[@]} ]; then
+        echo "WARNING: You do not have the same number of kernels & initrds;"
+        echo "This may not work..."
+  fi
+}
+
+select_kernel () {
+echo ""
+echo "Select an available kernel by number from below:"
+list_kernel
+read -t 30 ANSWER
+KERN="${KERN_ARR[${ANSWER}]}"
+INITRD="${INIT_ARR[${ANSWER}]}"
+
+confirm_kernel
+}
+
+confirm_kernel () {
+echo "Your chosen kernel is $KERN.  Is this correct? (Y|n)"
+echo ""
+read -t 30 CONFIRM
+case "$CONFIRM" in
+        "y" | "Y" | "")
+                echo "Using kernel ${KERN_ARR[${ANSWER}]} and initrd ${INIT_ARR[${ANSWER}]}..."
+        ;;
+
+        "n" | "N")
+                echo "Let's try again..."
+                select_kernel
+                
+        ;;
+esac
+}
+
 finished () {
 
 if type neuca-get-public-ip >/dev/null
@@ -106,8 +161,8 @@ cat << HELP
 The following files have been created:
 
 $dest/${name}.tgz
-$dest/${name}.aki
-$dest/${name}.ari
+$dest/$KERN
+$dest/$INITRD
 $dest/${name}.xml
 
 To download them and preserve the sparseness of the disk image, we recommend running
@@ -130,12 +185,12 @@ cat > $dest/${name}.xml << EOF
      </image>
      <image>
           <type>KERNEL</type>
-          <signature>$(sha1sum $dest/${name}.aki | cut -d' ' -f 1)</signature>
+          <signature>$(sha1sum $dest/$KERN | cut -d' ' -f 1)</signature>
           <url>http://www.your-own-webserver.edu/images/${name}.aki</url>
      </image>
      <image>
           <type>RAMDISK</type>
-          <signature>$(sha1sum $dest/${name}.ari | cut -d' ' -f 1)</signature>
+          <signature>$(sha1sum $dest/$INITRD | cut -d' ' -f 1)</signature>
           <url>http://www.your-own-webserver.edu/images/${name}.ari</url>
      </image>
 </images>
@@ -201,15 +256,17 @@ if [ -z "$name" ]; then
   fi
 fi
 
-create || (echo "Failed to create disk image." && exit 1)
-format || (echo "Failed to locate mkfs.  Could not format disk image." && exit 1)
-[ ! -d /mnt/tmp ] && mkdir /mnt/tmp
-mount -o loop $dest/filesystem /mnt/tmp
-copy
-umount /mnt/tmp || (echo "Failed to unmount image file." && exit 1)
-cp -a $(grep `uname -r` <<< "$(ls /boot/*)" | grep vmlin) $dest/${name}.aki
-cp -a $(grep `uname -r` <<< "$(ls /boot/*)" | grep initr) $dest/${name}.ari
-tar -Sczvf ${dest}/${name}.tgz  -C $dest filesystem
+#create || (echo "Failed to create disk image." && exit 1)
+#format || (echo "Failed to locate mkfs.  Could not format disk image." && exit 1)
+#[ ! -d /mnt/tmp ] && mkdir /mnt/tmp
+#mount -o loop $dest/filesystem /mnt/tmp
+#copy
+#umount /mnt/tmp || (echo "Failed to unmount image file." && exit 1)
+
+select_kernel
+cp /boot/$KERN $dest/$KERN
+cp /boot/$INITRD $dest/$INITRD
+#tar -Sczvf ${dest}/${name}.tgz  -C $dest filesystem
 meta
 
 # Print some hints
