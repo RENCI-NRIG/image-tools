@@ -29,9 +29,12 @@
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 
 # initialize flag vars
-name=   dest=   size=2G   blocksize=4096
+name=
+size=2G
+blocksize=4096
+dest="/mnt/target"
 KERN_ARR=  INIT_ARR=  KERN=  INITRD=
-url="http://www.your-own-webserver.edu/images/"
+url="http://www.your-own-webserver.edu/images"
 
 seek () {
 
@@ -81,10 +84,33 @@ format () {
 
 copy () {
 cd /; find . ! -path "./tmp/*" ! -path "./proc/*" ! -path "./sys/*" \
-  ! -path "./mnt/*" ! -path "./etc/ssh/ssh_host_*" \
+  ! -path "./mnt/*" ! -path "./${dest}/*" ! -path "./etc/ssh/ssh_host_*" \
   ! -path "./var/lib/iscsi/*" ! -path "/root/.ssh/*" \
   ! -path "./etc/udev/rules.d/70-persistent-net.rules" \
   | cpio -pmdv /mnt/tmp
+}
+
+
+fix_debian_ssh () {
+cat > /mnt/tmp/etc/rc.local << EOF
+#!/bin/bash
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+
+# Regenerate ssh host keys
+dpkg-reconfigure openssh-server
+
+exit 0
+EOF
 }
 
 
@@ -115,13 +141,14 @@ list_kernel () {
 
 select_kernel () {
 
-# Choose newest kernel by default
-ANSWER=1
-
 echo ""
 echo "Select an available kernel by number from below:"
 list_kernel
-read -t 30 ANSWER
+read -t 15 ANSWER
+
+# Choose newest kernel by default
+[ -z $ANSWER ] && ANSWER=1
+
 KERN="${KERN_ARR[${ANSWER}]}"
 INITRD="${INIT_ARR[${ANSWER}]}"
 
@@ -198,7 +225,7 @@ EOF
 }
 
 usage () {
-echo "Usage: $0 [-v] [-n name] [-d destination] [-s size (M|MB|G|GB|T|TB)] [-u url (e.g. http://geni-images.renci.org/images/)]" >&2
+echo "Usage: $0 [-v] [-n name] [-d destination] [-s size (M|MB|G|GB|T|TB)] [-u url (e.g. http://geni-images.renci.org/images)]" >&2
 }
 
 
@@ -232,15 +259,6 @@ do
 done
 shift $((OPTIND - 1))   # Remove options, leave arguments
 
-# validate destination directory for image
-if [ -z "$dest" ]; then
-  if type neuca-get >/dev/null
-  then
-    dest=$(neuca-get storage dev0 | awk -F':' '{print $11}')
-  else
-    dest="/tmp"
-  fi
-fi
 # Ensure destination exists
 [ -d $dest ] || (echo "$dest does not exist" && exit 1)
 
@@ -261,6 +279,10 @@ format || (echo "Failed to locate mkfs.  Could not format disk image." && exit 1
 [ ! -d /mnt/tmp ] && mkdir /mnt/tmp
 mount -o loop $dest/filesystem /mnt/tmp
 copy
+
+# Address issue where debian systems fail to auto-regen ssh host keys on boot.  
+[ -f /mnt/tmp/etc/debian_version ] && fix_debian_ssh
+
 umount /mnt/tmp || (echo "Failed to unmount image file." && exit 1)
 
 cp /boot/$KERN $dest/$KERN
