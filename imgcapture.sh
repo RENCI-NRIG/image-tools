@@ -32,7 +32,7 @@ export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 name=
 size=2G
 blocksize=4096
-dest="/mnt/target"
+dest="/tmp"
 KERN_ARR=  INIT_ARR=  KERN=  INITRD=
 url="http://www.your-own-webserver.edu/images"
 
@@ -80,6 +80,7 @@ format () {
   else
     exit 1
   fi
+
 }
 
 copy () {
@@ -87,12 +88,12 @@ cd /; find . ! -path "./tmp/*" ! -path "./proc/*" ! -path "./sys/*" \
   ! -path "./mnt/*" ! -path "./${dest}/*" ! -path "./etc/ssh/ssh_host_*" \
   ! -path "./var/lib/iscsi/*" ! -path "/root/.ssh/*" \
   ! -path "./etc/udev/rules.d/70-persistent-net.rules" \
-  | cpio -pmdv /mnt/tmp
+  | cpio -pmdv ${dest}/mnt-image
 }
 
 
 fix_debian_ssh () {
-cat > /mnt/tmp/etc/rc.local << EOF
+cat > ${dest}/mnt-image/etc/rc.local << EOF
 #!/bin/bash
 #
 # rc.local
@@ -260,7 +261,10 @@ done
 shift $((OPTIND - 1))   # Remove options, leave arguments
 
 # Ensure destination exists
-[ -d $dest ] || (echo "$dest does not exist" && exit 1)
+if [ ! -d $dest ]; then
+    echo "$dest does not exist" 
+    exit 1
+fi
 
 if [ -z "$name" ]; then
   if type neuca-get >/dev/null
@@ -276,14 +280,14 @@ select_kernel
 create || (echo "Failed to create disk image." && exit 1)
 format || (echo "Failed to locate mkfs.  Could not format disk image." && exit 1)
 
-[ ! -d /mnt/tmp ] && mkdir /mnt/tmp
-mount -o loop $dest/filesystem /mnt/tmp
+[ ! -d ${dest}/mnt-image ] && mkdir ${dest}/mnt-image
+mount -o loop $dest/filesystem ${dest}/mnt-image
 copy
 
 # Address issue where debian systems fail to auto-regen ssh host keys on boot.  
-[ -f /mnt/tmp/etc/debian_version ] && fix_debian_ssh
+[ -f ${dest}/mnt-image/etc/debian_version ] && fix_debian_ssh
 
-umount /mnt/tmp || (echo "Failed to unmount image file." && exit 1)
+umount /${dest}/mnt-image || (echo "Failed to unmount image file." && exit 1)
 
 cp /boot/$KERN $dest/$KERN
 cp /boot/$INITRD $dest/$INITRD
