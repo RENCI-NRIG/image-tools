@@ -173,6 +173,12 @@ case "$CONFIRM" in
 esac
 }
 
+fix_fstab () {
+ 
+ echo  '/dev/vda / ext3 defaults 0 0' > /etc/fstab
+  
+}
+
 finished () {
 
 if type neuca-get-public-ip >/dev/null
@@ -274,6 +280,8 @@ if [ -z "$name" ]; then
     name="`hostname`"
   fi
 fi
+
+fix_fstab
 
 select_kernel
 
