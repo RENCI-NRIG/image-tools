@@ -174,9 +174,18 @@ esac
 }
 
 fix_fstab () {
- 
- echo  '/dev/vda / ext3 defaults 0 0' > /etc/fstab
-  
+  if type mkfs.ext4 >/dev/null
+  then
+    echo  '/dev/vda / ext4 defaults 0 0' > ${dest}/mnt-image/etc/fstab
+  elif type mkfs.ext3 >/dev/null
+  then
+    echo  '/dev/vda / ext3 defaults 0 0' > ${dest}/mnt-image/etc/fstab
+  elif type mkfs.ext2 >/dev/null
+  then
+    echo  '/dev/vda / ext2 defaults 0 0' > ${dest}/mnt-image/etc/fstab
+  else
+    exit 1
+  fi
 }
 
 finished () {
@@ -281,8 +290,6 @@ if [ -z "$name" ]; then
   fi
 fi
 
-fix_fstab
-
 select_kernel
 
 create || (echo "Failed to create disk image." && exit 1)
@@ -291,6 +298,8 @@ format || (echo "Failed to locate mkfs.  Could not format disk image." && exit 1
 [ ! -d ${dest}/mnt-image ] && mkdir ${dest}/mnt-image
 mount -o loop $dest/filesystem ${dest}/mnt-image
 copy
+
+fix_fstab
 
 # Address issue where debian systems fail to auto-regen ssh host keys on boot.  
 [ -f ${dest}/mnt-image/etc/debian_version ] && fix_debian_ssh
