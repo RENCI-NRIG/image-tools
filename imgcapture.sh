@@ -86,7 +86,7 @@ format () {
 copy () {
 cd /; find . ! -path "./tmp/*" ! -path "./proc/*" ! -path "./sys/*" \
   ! -path "./mnt/*" ! -path "./${dest}/*" ! -path "./etc/ssh/ssh_host_*" \
-  ! -path "./var/lib/iscsi/*" ! -path "/root/.ssh/*" \
+  ! -path "./var/lib/iscsi/*" ! -path "/root/.ssh/*" ! -path "/vagrant" \
   ! -path "./etc/udev/rules.d/70-persistent-net.rules" \
   | cpio -pmdv ${dest}/mnt-image
 }
