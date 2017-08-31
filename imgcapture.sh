@@ -190,7 +190,8 @@ fix_fstab () {
 
 finished () {
 
-if type neuca-get-public-ip >/dev/null
+type neuca-get-public-ip > /dev/null
+if [ -z $noneuca ] && [ $? eq 0 ]
 then
   IP=$(neuca-get-public-ip)
 elif type curl >/dev/null
@@ -241,7 +242,7 @@ EOF
 }
 
 usage () {
-echo "Usage: $0 [-v] [-n name] [-d destination] [-s size (M|MB|G|GB|T|TB)] [-u url (e.g. http://geni-images.renci.org/images)]" >&2
+	echo "Usage: $0 [-o (don't use neuca)] [-v (verbose)] [-n name] [-d destination] [-s size (M|MB|G|GB|T|TB)] [-u url (e.g. http://geni-images.renci.org/images)]" >&2
 }
 
 
@@ -252,9 +253,10 @@ fi
 
 
 # leading colon is so we do error handling
-while getopts :vn:d:u:b:s: opt
+while getopts :ovn:d:u:b:s: opt
 do
         case $opt in
+	o)	noneuca="NONEUCA" ;;
         v)      set -x  ;;
         n)      name=$OPTARG    ;;
         d)      dest=$OPTARG    ;;
@@ -282,7 +284,8 @@ if [ ! -d $dest ]; then
 fi
 
 if [ -z "$name" ]; then
-  if type neuca-get >/dev/null
+  type neuca-get > /dev/null
+  if [ -z $noneuca ] && [ $? -eq 0 ]
   then
     name=$(neuca-get slice_name)
   else
