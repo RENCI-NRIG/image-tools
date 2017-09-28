@@ -86,17 +86,25 @@ format () {
 }
 
 copy () {
-    cd /; find . ! -path "./tmp/*" \
+    # We don't want /vagrant, /home/vagrant, /home/ubuntu, or
+    # ${dest} present in the final image; hence, we use the -prune
+    # syntax.
+    # If we ever start supporting a *nix that uses a static /dev
+    # again, this will need to be modified...
+    cd /; find . \
+               ! -path "./dev/*" \
                ! -path "./proc/*" \
                ! -path "./sys/*" \
                ! -path "./mnt/*" \
-               ! -path "./${dest}/*" \
+               ! -path "./tmp/*" \
                ! -path "./etc/ssh/ssh_host_*" \
                ! -path "./var/lib/iscsi/*" \
                ! -path "./root/.ssh/*" \
-               ! -path "./vagrant/*" \
                ! -path "./etc/udev/rules.d/70-persistent-net.rules" \
-               ! -path "./home/vagrant/*" \
+               ! \( -path ./${dest} -prune \) \
+               ! \( -path ./vagrant -prune \) \
+               ! \( -path ./home/vagrant -prune \) \
+               ! \( -path ./home/ubuntu -prune \) \
         | cpio -pmdv ${dest}/mnt-image
 }
 
@@ -193,6 +201,19 @@ fix_fstab () {
     else
         exit 1
     fi
+}
+
+remove_ubuntu_user_records () {
+    sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/passwd
+    sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/shadow
+
+    sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/group
+    sed -i 's/,ubuntu$//' ${dest}/mnt-image/etc/group
+    sed -i 's/:ubuntu$/:/' ${dest}/mnt-image/etc/group
+
+    sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/gshadow
+    sed -i 's/,ubuntu$//' ${dest}/mnt-image/etc/gshadow
+    sed -i 's/:ubuntu$/:/' ${dest}/mnt-image/etc/gshadow
 }
 
 finished () {
@@ -306,6 +327,7 @@ mount -o loop $dest/filesystem ${dest}/mnt-image
 copy
 
 fix_fstab
+remove_ubuntu_user_records
 
 # Address issue where debian systems fail to auto-regen ssh host keys on boot.  
 [ -f ${dest}/mnt-image/etc/debian_version ] && fix_debian_ssh
