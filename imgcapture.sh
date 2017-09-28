@@ -133,21 +133,19 @@ EOF
 
 
 list_kernel () {
-    KERNS=$(ls /boot/vmlin* | sort -r | cut -d '/' -f 3)
+    KERNS=$(ls /boot/vmlinu[xz]* | sort -r | cut -d '/' -f 3)
     INITS=$(ls /boot/init* | sort -r | cut -d '/' -f 3)
-
-    num=1
-    for i in $INITS
-    do
-        INIT_ARR[${num}]=$i
-        num=$((num+1))
-    done;
 
     num=1
     for i in $KERNS
     do
         echo -e "\t$num)\t$i"
         KERN_ARR[${num}]=$i
+        VER_STR=$(echo $i | sed 's/vmlinu[xz]-//')
+        MATCHING_INITRD=$(ls /boot/*${VER_STR}* 2>/dev/null | grep init | cut -d '/' -f 3)
+        if [ "$MATCHING_INITRD" != "" ]; then
+            INIT_ARR[${num}]=$MATCHING_INITRD
+        fi
         num=$((num+1))
     done;
 
