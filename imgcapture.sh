@@ -100,6 +100,7 @@ copy () {
                ! -path "./etc/ssh/ssh_host_*" \
                ! -path "./var/lib/iscsi/*" \
                ! -path "./root/.ssh/*" \
+               ! -path "./root/.bash_history" \
                ! -path "./etc/udev/rules.d/70-persistent-net.rules" \
                ! \( -path ./${dest} -prune \) \
                ! \( -path ./vagrant -prune \) \
