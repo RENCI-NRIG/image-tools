@@ -216,6 +216,19 @@ remove_ubuntu_user_records () {
     sed -i 's/:ubuntu$/:/' ${dest}/mnt-image/etc/gshadow
 }
 
+remove_vagrant_user_records () {
+    sed -i '/^vagrant/d' ${dest}/mnt-image/etc/passwd
+    sed -i '/^vagrant/d' ${dest}/mnt-image/etc/shadow
+
+    sed -i '/^vagrant/d' ${dest}/mnt-image/etc/group
+    sed -i 's/,vagrant$//' ${dest}/mnt-image/etc/group
+    sed -i 's/:vagrant$/:/' ${dest}/mnt-image/etc/group
+
+    sed -i '/^vagrant/d' ${dest}/mnt-image/etc/gshadow
+    sed -i 's/,vagrant$//' ${dest}/mnt-image/etc/gshadow
+    sed -i 's/:vagrant$/:/' ${dest}/mnt-image/etc/gshadow
+}
+
 finished () {
     type neuca-get-public-ip > /dev/null
     if [ -z $noneuca ] && [ $? eq 0 ]
@@ -328,6 +341,7 @@ copy
 
 fix_fstab
 remove_ubuntu_user_records
+remove_vagrant_user_records
 
 # Address issue where debian systems fail to auto-regen ssh host keys on boot.  
 [ -f ${dest}/mnt-image/etc/debian_version ] && fix_debian_ssh
