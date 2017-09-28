@@ -202,28 +202,44 @@ fix_fstab () {
 
 remove_ubuntu_user_records () {
     sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/passwd
+    sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/passwd-
     sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/shadow
+    sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/shadow-
 
     sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/group
     sed -i 's/,ubuntu$//' ${dest}/mnt-image/etc/group
     sed -i 's/:ubuntu$/:/' ${dest}/mnt-image/etc/group
+    sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/group-
+    sed -i 's/,ubuntu$//' ${dest}/mnt-image/etc/group-
+    sed -i 's/:ubuntu$/:/' ${dest}/mnt-image/etc/group-
 
     sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/gshadow
     sed -i 's/,ubuntu$//' ${dest}/mnt-image/etc/gshadow
     sed -i 's/:ubuntu$/:/' ${dest}/mnt-image/etc/gshadow
+    sed -i '/^ubuntu/d' ${dest}/mnt-image/etc/gshadow-
+    sed -i 's/,ubuntu$//' ${dest}/mnt-image/etc/gshadow-
+    sed -i 's/:ubuntu$/:/' ${dest}/mnt-image/etc/gshadow-
 }
 
 remove_vagrant_user_records () {
     sed -i '/^vagrant/d' ${dest}/mnt-image/etc/passwd
+    sed -i '/^vagrant/d' ${dest}/mnt-image/etc/passwd-
     sed -i '/^vagrant/d' ${dest}/mnt-image/etc/shadow
+    sed -i '/^vagrant/d' ${dest}/mnt-image/etc/shadow-
 
     sed -i '/^vagrant/d' ${dest}/mnt-image/etc/group
     sed -i 's/,vagrant$//' ${dest}/mnt-image/etc/group
     sed -i 's/:vagrant$/:/' ${dest}/mnt-image/etc/group
+    sed -i '/^vagrant/d' ${dest}/mnt-image/etc/group-
+    sed -i 's/,vagrant$//' ${dest}/mnt-image/etc/group-
+    sed -i 's/:vagrant$/:/' ${dest}/mnt-image/etc/group-
 
     sed -i '/^vagrant/d' ${dest}/mnt-image/etc/gshadow
     sed -i 's/,vagrant$//' ${dest}/mnt-image/etc/gshadow
     sed -i 's/:vagrant$/:/' ${dest}/mnt-image/etc/gshadow
+    sed -i '/^vagrant/d' ${dest}/mnt-image/etc/gshadow-
+    sed -i 's/,vagrant$//' ${dest}/mnt-image/etc/gshadow-
+    sed -i 's/:vagrant$/:/' ${dest}/mnt-image/etc/gshadow-
 }
 
 finished () {
