@@ -134,7 +134,6 @@ EOF
 
 list_kernel () {
     KERNS=$(ls /boot/vmlinu[xz]* | sort -r | cut -d '/' -f 3)
-    INITS=$(ls /boot/init* | sort -r | cut -d '/' -f 3)
 
     num=1
     for i in $KERNS
