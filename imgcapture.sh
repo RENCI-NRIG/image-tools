@@ -103,6 +103,7 @@ copy () {
                ! -path "./mnt/*" \
                ! -path "./tmp/*" \
                ! -path "./etc/ssh/ssh_host_*" \
+               ! -path "./etc/sudoers.d/vagrant" \
                ! -path "./var/lib/iscsi/*" \
                ! -path "./root/.ssh/*" \
                ! -path "./root/.bash_history" \
@@ -113,43 +114,9 @@ copy () {
                ! \( -path ./home/vagrant -prune \) \
                ! \( -path ./home/ubuntu -prune \) \
                ! \( -type f -a -path "./var/lib/neuca/*" -prune \) \
-        | cpio -pmdv ${dest}/mnt-image
+               -print0
+        | cpio -p0mdv ${dest}/mnt-image
 }
-
-rsync_copy () {
-    SELINUX_STATUS=$(getenforce)
-    if [ "$SELINUX_STATUS" != "Permissive" ]; then
-        setenforce 0
-    fi
-    # We don't want /vagrant, /home/vagrant, /home/ubuntu, or
-    # ${dest} present in the final image; hence, we use the -prune
-    # syntax.
-    # If we ever start supporting a *nix that uses a static /dev
-    # again, this will need to be modified...
-    cd /; find . \
-               ! -path "./dev/*" \
-               ! -path "./proc/*" \
-               ! -path "./sys/*" \
-               ! -path "./mnt/*" \
-               ! -path "./tmp/*" \
-               ! -path "./etc/ssh/ssh_host_*" \
-               ! -path "./var/lib/iscsi/*" \
-               ! -path "./root/.ssh/*" \
-               ! -path "./root/.bash_history" \
-               ! -path "./etc/udev/rules.d/70-persistent-net.rules" \
-               ! -path "./etc/udev/rules.d/*neuca-persistent*" \
-               ! \( -path ./${dest} -prune \) \
-               ! \( -path ./vagrant -prune \) \
-               ! \( -path ./home/vagrant -prune \) \
-               ! \( -path ./home/ubuntu -prune \) \
-               ! \( -type f -a -path "./var/lib/neuca/*" -prune \) \
-               -print0 \
-        | rsync -aAXHv --files-from=- --from0 . ${dest}/mnt-image
-    if [ "$SELINUX_STATUS" != "Permissive" ]; then
-        setenforce 1
-    fi
-}
-
 
 fix_debian_ssh () {
 cat > ${dest}/mnt-image/etc/rc.local << EOF
@@ -172,7 +139,6 @@ dpkg-reconfigure openssh-server
 exit 0
 EOF
 }
-
 
 list_kernel () {
     KERNS=$(ls /boot/vmlinu[xz]* | sort -r | cut -d '/' -f 3)
@@ -338,11 +304,12 @@ usage () {
 }
 
 
+### Start of main script...
+
 if [ $# -lt 2 ]; then
     usage
     exit 1
 fi
-
 
 # leading colon is so we do error handling
 while getopts :ovn:d:u:b:s: opt
@@ -392,8 +359,7 @@ format || (echo "Failed to locate mkfs.  Could not format disk image." && exit 1
 
 [ ! -d ${dest}/mnt-image ] && mkdir ${dest}/mnt-image
 mount -o loop $dest/filesystem ${dest}/mnt-image
-# copy
-rsync_copy
+copy
 
 fix_fstab
 remove_ubuntu_user_records
