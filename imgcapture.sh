@@ -145,7 +145,7 @@ tar_copy () {
                ! \( -path ./home/ubuntu -prune \) \
                ! \( -type f -a -path "./var/lib/neuca/*" -prune \) \
                -print0 \
-        | tar -c --null --selinux --acls -T - \
+        | tar -c --selinux --acls --no-recursion --null -T - \
         | tar -C ${dest}/mnt-image -xv --selinux --acls
 }
 
