@@ -114,7 +114,7 @@ copy () {
                ! \( -path ./home/vagrant -prune \) \
                ! \( -path ./home/ubuntu -prune \) \
                ! \( -type f -a -path "./var/lib/neuca/*" -prune \) \
-               -print0
+               -print0 \
         | cpio -p0mdv ${dest}/mnt-image
 }
 
