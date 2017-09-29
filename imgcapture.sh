@@ -102,10 +102,12 @@ copy () {
                ! -path "./root/.ssh/*" \
                ! -path "./root/.bash_history" \
                ! -path "./etc/udev/rules.d/70-persistent-net.rules" \
+               ! -path "./etc/udev/rules.d/*neuca-persistent*" \
                ! \( -path ./${dest} -prune \) \
                ! \( -path ./vagrant -prune \) \
                ! \( -path ./home/vagrant -prune \) \
                ! \( -path ./home/ubuntu -prune \) \
+               ! \( -type f -a -path ./var/lib/neuca/* -prune \) \
         | cpio -pmdv ${dest}/mnt-image
 }
 
