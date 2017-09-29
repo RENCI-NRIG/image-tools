@@ -73,7 +73,12 @@ format () {
     then
         # Current ExoGENI racks have e2fsprogs that can't handle
         # the "64bit" feature.
-        mkfs.ext4 -O ^64bit -F -j $dest/filesystem >/dev/null
+        mkfs.ext4 -O ^64bit -F -j $dest/filesystem >/dev/null 2>&1
+        RC=$?
+        if [ ${RC} -ne 0 ]; then
+            # 64bit flag probably unrecognized; give it another shot without.
+            mkfs.ext4 -F -j $dest/filesystem >/dev/null
+        fi
     elif type mkfs.ext3 >/dev/null
     then
         mkfs.ext3 -F -j $dest/filesystem >/dev/null
