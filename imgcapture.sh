@@ -91,9 +91,9 @@ format () {
 }
 
 copy () {
-    SELINUX_STATUS=$(getenforce 2>/dev/null)
+    which getenforce >/dev/null && SELINUX_STATUS=$(getenforce 2>/dev/null)
     if [ "$SELINUX_STATUS" = "Enforcing" ]; then
-        setenforce 0 2>/dev/null 2>&1
+        which setenforce >/dev/null && setenforce 0 2>/dev/null
     fi
     # We don't want /vagrant, /home/vagrant, /home/ubuntu, or
     # ${dest} present in the final image; hence, we use the -prune
@@ -124,7 +124,7 @@ copy () {
         | tar -c --selinux --acls --xattrs --no-recursion --null -T - \
         | tar -C ${dest}/mnt-image -xv --selinux --acls --xattrs
     if [ "$SELINUX_STATUS" = "Enforcing" ]; then
-        setenforce 1 >/dev/null 2>&1
+        which setenforce >/dev/null && setenforce 1 2>/dev/null
     fi
 }
 
