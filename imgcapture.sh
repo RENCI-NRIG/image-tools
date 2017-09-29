@@ -105,6 +105,7 @@ copy () {
                ! -path "./proc/*" \
                ! -path "./sys/*" \
                ! -path "./selinux/*" \
+               ! -path "./var/lib/lxcfs/*" \
                ! -path "./mnt/*" \
                ! -path "./tmp/*" \
                ! -path "./etc/ssh/ssh_host_*" \
