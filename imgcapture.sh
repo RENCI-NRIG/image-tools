@@ -121,6 +121,10 @@ copy () {
 }
 
 tar_copy () {
+    SELINUX_STATUS=$(getenforce)
+    if [ "$SELINUX_STATUS" != "Permissive" ]; then
+        setenforce 0
+    fi
     # We don't want /vagrant, /home/vagrant, /home/ubuntu, or
     # ${dest} present in the final image; hence, we use the -prune
     # syntax.
@@ -149,6 +153,9 @@ tar_copy () {
                -print0 \
         | tar -c --selinux --acls --no-recursion --null -T - \
         | tar -C ${dest}/mnt-image -xv --selinux --acls
+    if [ "$SELINUX_STATUS" != "Permissive" ]; then
+        setenforce 1
+    fi
 }
 
 fix_debian_ssh () {
