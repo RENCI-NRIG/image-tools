@@ -104,6 +104,7 @@ copy () {
                ! -path "./tmp/*" \
                ! -path "./etc/ssh/ssh_host_*" \
                ! -path "./etc/sudoers.d/vagrant" \
+               ! -path "./var/spool/mail/vagrant" \
                ! -path "./var/lib/iscsi/*" \
                ! -path "./root/.ssh/*" \
                ! -path "./root/.bash_history" \
