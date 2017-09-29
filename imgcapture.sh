@@ -100,6 +100,7 @@ copy () {
                ! -path "./dev/*" \
                ! -path "./proc/*" \
                ! -path "./sys/*" \
+               ! -path "./selinux/*" \
                ! -path "./mnt/*" \
                ! -path "./tmp/*" \
                ! -path "./etc/ssh/ssh_host_*" \
@@ -129,6 +130,7 @@ tar_copy () {
                ! -path "./dev/*" \
                ! -path "./proc/*" \
                ! -path "./sys/*" \
+               ! -path "./selinux/*" \
                ! -path "./mnt/*" \
                ! -path "./tmp/*" \
                ! -path "./etc/ssh/ssh_host_*" \
