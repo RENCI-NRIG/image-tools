@@ -108,15 +108,19 @@ copy () {
                ! -path "./root/.bash_history" \
                ! -path "./etc/udev/rules.d/70-persistent-net.rules" \
                ! -path "./etc/udev/rules.d/*neuca-persistent*" \
-               ! \( -path "./${dest}" -prune \) \
-               ! \( -path "./vagrant" -prune \) \
-               ! \( -path "./home/vagrant" -prune \) \
-               ! \( -path "./home/ubuntu" -prune \) \
+               ! \( -path ./${dest} -prune \) \
+               ! \( -path ./vagrant -prune \) \
+               ! \( -path ./home/vagrant -prune \) \
+               ! \( -path ./home/ubuntu -prune \) \
                ! \( -type f -a -path "./var/lib/neuca/*" -prune \) \
         | cpio -pmdv ${dest}/mnt-image
 }
 
 rsync_copy () {
+    SELINUX_STATUS=$(getenforce)
+    if [ "$SELINUX_STATUS" != "Permissive" ]; then
+        setenforce 0
+    fi
     # We don't want /vagrant, /home/vagrant, /home/ubuntu, or
     # ${dest} present in the final image; hence, we use the -prune
     # syntax.
@@ -134,13 +138,16 @@ rsync_copy () {
                ! -path "./root/.bash_history" \
                ! -path "./etc/udev/rules.d/70-persistent-net.rules" \
                ! -path "./etc/udev/rules.d/*neuca-persistent*" \
-               ! \( -path "./${dest}" -prune \) \
-               ! \( -path "./vagrant" -prune \) \
-               ! \( -path "./home/vagrant" -prune \) \
-               ! \( -path "./home/ubuntu" -prune \) \
+               ! \( -path ./${dest} -prune \) \
+               ! \( -path ./vagrant -prune \) \
+               ! \( -path ./home/vagrant -prune \) \
+               ! \( -path ./home/ubuntu -prune \) \
                ! \( -type f -a -path "./var/lib/neuca/*" -prune \) \
                -print0 \
         | rsync -aAXHv --files-from=- --from0 . ${dest}/mnt-image
+    if [ "$SELINUX_STATUS" != "Permissive" ]; then
+        setenforce 1
+    fi
 }
 
 
@@ -403,7 +410,7 @@ cp /boot/$INITRD $dest/$INITRD
 echo -e "Creating compressed tar archive...\n"
 tar -Sczvf ${dest}/${name}.tgz  -C $dest filesystem
 
-echo -e "Generatng metadata...\n"
+echo -e "Generating metadata...\n"
 meta
 
 # Print some hints
