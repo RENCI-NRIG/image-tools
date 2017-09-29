@@ -91,36 +91,6 @@ format () {
 }
 
 copy () {
-    # We don't want /vagrant, /home/vagrant, /home/ubuntu, or
-    # ${dest} present in the final image; hence, we use the -prune
-    # syntax.
-    # If we ever start supporting a *nix that uses a static /dev
-    # again, this will need to be modified...
-    cd /; find . \
-               ! -path "./dev/*" \
-               ! -path "./proc/*" \
-               ! -path "./sys/*" \
-               ! -path "./selinux/*" \
-               ! -path "./mnt/*" \
-               ! -path "./tmp/*" \
-               ! -path "./etc/ssh/ssh_host_*" \
-               ! -path "./etc/sudoers.d/vagrant" \
-               ! -path "./var/spool/mail/vagrant" \
-               ! -path "./var/lib/iscsi/*" \
-               ! -path "./root/.ssh/*" \
-               ! -path "./root/.bash_history" \
-               ! -path "./etc/udev/rules.d/70-persistent-net.rules" \
-               ! -path "./etc/udev/rules.d/*neuca-persistent*" \
-               ! \( -path ./${dest} -prune \) \
-               ! \( -path ./vagrant -prune \) \
-               ! \( -path ./home/vagrant -prune \) \
-               ! \( -path ./home/ubuntu -prune \) \
-               ! \( -type f -a -path "./var/lib/neuca/*" -prune \) \
-               -print0 \
-        | cpio -p0mdv ${dest}/mnt-image
-}
-
-tar_copy () {
     SELINUX_STATUS=$(getenforce)
     if [ "$SELINUX_STATUS" != "Permissive" ]; then
         setenforce 0
@@ -399,8 +369,7 @@ format || (echo "Failed to locate mkfs.  Could not format disk image." && exit 1
 
 [ ! -d ${dest}/mnt-image ] && mkdir ${dest}/mnt-image
 mount -o loop $dest/filesystem ${dest}/mnt-image
-# copy
-tar_copy
+copy
 
 fix_fstab
 remove_ubuntu_user_records
