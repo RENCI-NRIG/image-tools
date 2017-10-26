@@ -72,11 +72,12 @@ format () {
     if type mkfs.ext4 >/dev/null
     then
         # Current ExoGENI racks have e2fsprogs that can't handle
-        # the "64bit" feature.
-        mkfs.ext4 -O ^64bit -F -j $dest/filesystem >/dev/null 2>&1
+        # the "64bit" and "metadata_csum" features.
+        # Therefore - we try calling mkfs.ext4 without those, first.
+        mkfs.ext4 -O ^64bit,^metadata_csum -F -j $dest/filesystem >/dev/null 2>&1
         RC=$?
         if [ ${RC} -ne 0 ]; then
-            # 64bit flag probably unrecognized; give it another shot without.
+            # New features probably unrecognized; give it another shot without.
             mkfs.ext4 -F -j $dest/filesystem >/dev/null
         fi
     elif type mkfs.ext3 >/dev/null
